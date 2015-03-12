@@ -4,5 +4,7 @@
     <string name="app_name">ISBN Service</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="loadIsbnData">load ISBN data</string>
+    <string name="inputIsbn">ISBN number</string>
 
 </resources>
