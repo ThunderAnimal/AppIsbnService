@@ -1,21 +1,18 @@
 package com.ebusiness.isbnservice.app;
 
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ProgressBar;
-import android.widget.TextView;
+import android.view.ViewGroup;
+import android.widget.*;
 import services.IServiceComplete;
 import services.IsbnService;
+
+import java.util.ArrayList;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -25,9 +22,11 @@ public class MainActivity extends ActionBarActivity {
     private ProgressBar mProgressIsbn;
     private IsbnService myIsbnService;
     private TextView mTextError;
+    private ListView mListView;
 
     private AlertDialog.Builder builder;
-    private AlertDialog dialog;
+    private ArrayList<String[]> isbnData = new ArrayList<String[]>();
+    private ArrayAdapter<String[]> adapter;
 
 
     @Override
@@ -36,11 +35,63 @@ public class MainActivity extends ActionBarActivity {
         setContentView(R.layout.activity_main);
 
         //Elemente mit der View verdrahten
+        getViewElemnts();
+
+        //Adapter für ListView erstellen
+        setAdapter();
+
+        //Builder für Alter Dialog erstellen
+        setDialogBuilder();
+
+        //Anzeige für Startview
+        setStartView();
+
+        mButtonIsbn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onClickLoadIsbn();
+            }
+        });
+    }
+
+    private  void onClickLoadIsbn(){
+        String text = mTextIsbn.getText().toString();
+        if(text.length() == 0){
+            builder.setMessage("NO input");
+            builder.create().show();
+            return;
+        }
+
+
+        setStartLoadView();
+        myIsbnService = new IsbnService(text);
+        myIsbnService.setListener(new IServiceComplete() {
+            @Override
+            public void callback(String Json) {
+                //Prüfen ob Error oder nicht
+                if(myIsbnService.isError(Json)){
+                    mTextError.setText(myIsbnService.getErrorText(Json));
+                    setViewErrorIsbn();
+                }else {
+                    changeIsbnDataList(myIsbnService.getIsbnDataList(Json));
+                    setViewOkIsbn();
+                }
+                setStopLoadView();
+            }
+        });
+        myIsbnService.execute();
+    }
+
+    private void getViewElemnts(){
+        //Elemente mit der View verdrahten
         mButtonIsbn = (Button) findViewById(R.id.btnloadIsbnData);
         mTextIsbn = (EditText) findViewById(R.id.inputIsbn);
         mProgressIsbn = (ProgressBar) findViewById(R.id.progressBarLoadIsbn);
         mTextError = (TextView) findViewById(R.id.textError);
+        mListView = (ListView) findViewById(R.id.listView);
+    }
 
+    private void setDialogBuilder(){
         //Alert Dialog
         builder = new AlertDialog.Builder(this);
         builder.setTitle("Error");
@@ -50,50 +101,59 @@ public class MainActivity extends ActionBarActivity {
                 dialog.cancel();
             }
         });
+    }
 
+    private void setAdapter(){
+        adapter = new ArrayAdapter<String[]>(this,android.R.layout.simple_list_item_2, android.R.id.text1,isbnData){
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                String[] entry = isbnData.get(position);
+                View view = super.getView(position, convertView, parent);
+                TextView text1 = (TextView) view.findViewById(android.R.id.text1);
+                TextView text2 = (TextView) view.findViewById(android.R.id.text2);
+                text1.setText(entry[0]);
+                text2.setText(entry[1]);
+                text1.setAllCaps(true);
+                return view;
+            }
+        };
+        mListView.setAdapter(adapter);
+    }
 
+    private void changeIsbnDataList(ArrayList<String[]> list){
+        for(int i = 0; i < list.size(); i ++){
+            isbnData.add(list.get(i));
+        }
+        adapter.notifyDataSetChanged();
+    }
 
+    private void setViewOkIsbn(){
+        mListView.setVisibility(View.VISIBLE);
+        mTextError.setVisibility(View.INVISIBLE);
+        mTextIsbn.setText("");
+    }
+
+    private void setViewErrorIsbn(){
+        mTextError.setVisibility(View.VISIBLE);
+        mListView.setVisibility(View.INVISIBLE);
+    }
+
+    private void setStartView(){
         // Anzeige
         mProgressIsbn.setVisibility(View.INVISIBLE);
         mTextError.setVisibility(View.INVISIBLE);
-
-        mButtonIsbn.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                String text = mTextIsbn.getText().toString();
-                if(text.length() == 0){
-                    builder.setMessage("NO input");
-                    builder.create().show();
-                    return;
-                }
-
-                mButtonIsbn.setEnabled(false);
-                mProgressIsbn.setVisibility(View.VISIBLE);
-
-                myIsbnService = new IsbnService(text);
-                myIsbnService.setListener(new IServiceComplete() {
-                    @Override
-                    public void callback(String Json) {
-                        //Prüfen ob Error oder nicht
-                        if(myIsbnService.isError(Json,mTextError)){
-                            mTextError.setVisibility(View.VISIBLE);
-                        }else {
-                            mTextError.setVisibility(View.INVISIBLE);
-                            mTextIsbn.setText("");
-                        }
-                        mButtonIsbn.setEnabled(true);
-                        mProgressIsbn.setVisibility(View.INVISIBLE);
-
-                    }
-                });
-                myIsbnService.execute();
-            }
-        });
-
-
+        mListView.setVisibility(View.INVISIBLE);
     }
 
+    private void setStartLoadView(){
+        mButtonIsbn.setEnabled(false);
+        mProgressIsbn.setVisibility(View.VISIBLE);
+    }
+
+    private void setStopLoadView(){
+        mButtonIsbn.setEnabled(true);
+        mProgressIsbn.setVisibility(View.INVISIBLE);
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

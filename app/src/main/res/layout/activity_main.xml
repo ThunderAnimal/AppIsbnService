@@ -44,5 +44,11 @@
                 android:layout_alignParentRight="true" android:layout_alignParentEnd="true"
                 android:textColor="@android:color/holo_red_dark" android:textIsSelectable="false"
                 android:gravity="center"/>
+        <ListView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/listView" android:layout_below="@+id/btnloadIsbnData"
+                android:layout_centerHorizontal="true" android:choiceMode="none"
+                android:layout_alignParentStart="false"/>
     </RelativeLayout>
 </RelativeLayout>
