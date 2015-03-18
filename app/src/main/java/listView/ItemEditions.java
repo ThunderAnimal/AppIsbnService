@@ -28,6 +28,9 @@ public class ItemEditions implements ItemContent, Comparable<ItemEditions> {
             }
         }
     }
+    public int getEditionNr(){
+        return editionNr;
+    }
 
     @Override
     public String getShowText1() {

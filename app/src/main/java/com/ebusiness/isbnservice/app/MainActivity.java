@@ -19,7 +19,6 @@ import services.IServiceComplete;
 import services.IsbnService;
 import services.OcrService;
 
-import java.io.BufferedReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +26,6 @@ import java.util.List;
 public class MainActivity extends ActionBarActivity {
 
     private Button mButtonIsbn;
-    private View mButtonPickImg;
     private EditText mTextIsbn;
     private ProgressBar mProgressIsbn;
     private TextView mTextError;
@@ -174,6 +172,10 @@ public class MainActivity extends ActionBarActivity {
                     setViewOkIsbn();
                 }
                 setStopLoadView();
+                if(myIsbnService.isNewEdition()){
+                    builder.setMessage("Book is deprecated \nnew edition available!");
+                    builder.create().show();
+                }
             }
         });
         myIsbnService.execute();

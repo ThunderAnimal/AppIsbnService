@@ -36,9 +36,13 @@ public class IsbnService extends AsyncTask<Void, Void, String> {
     private String errorText;
     private ArrayList<ItemIsbnData> isbnData = new ArrayList<ItemIsbnData>();
     private ArrayList<ItemEditions> isbnEditions = new ArrayList<ItemEditions>();
+    private int currentEdition;
+    private int maxEtition;
 
     public IsbnService(String isbn){
         this.isbn = isbn;
+        maxEtition = 0;
+        currentEdition = 0;
     }
 
     public void setListener(IServiceComplete serviceComplete){
@@ -131,33 +135,84 @@ public class IsbnService extends AsyncTask<Void, Void, String> {
     }
     private void setIsbnDataList(String json){
         JSONObject isbnJsonObject;
+        ItemEditions edition;
         isbnData.clear();
 
-        try {
+        try{
             isbnJsonObject = new JSONArray(new JSONObject(json).getString("list")).getJSONObject(0);
-            isbnData.add(new ItemIsbnData ("TITLE", isbnJsonObject.getString("title")));
-            isbnData.add(new ItemIsbnData("AUTOR", isbnJsonObject.getString("author")));
-            isbnData.add(new ItemIsbnData("PUBLISHER", isbnJsonObject.getString("publisher")));
-            isbnData.add(new ItemIsbnData("LANGUAGE", isbnJsonObject.getString("lang")));
-            isbnData.add(new ItemIsbnData("YEAR", isbnJsonObject.getString("year")));
-            isbnData.add(new ItemIsbnData("EDITION", isbnJsonObject.getString("ed")));
-            isbnData.add(new ItemIsbnData("FORM", isbnJsonObject.getString("form")));
-            isbnData.add(new ItemIsbnData("ISBN", (String) isbnJsonObject.getJSONArray("isbn").get(0)));
-        } catch (JSONException e) {
+            try {
+                isbnData.add(new ItemIsbnData ("TITLE", isbnJsonObject.getString("title")));
+            }catch (JSONException e){
+                e.printStackTrace();
+            }
+            try {
+                isbnData.add(new ItemIsbnData("AUTOR", isbnJsonObject.getString("author")));
+            }catch (JSONException e){
+                e.printStackTrace();
+            }
+            try {
+                isbnData.add(new ItemIsbnData("PUBLISHER", isbnJsonObject.getString("publisher")));
+            }catch (JSONException e){
+                e.printStackTrace();
+            }
+            try {
+                isbnData.add(new ItemIsbnData("LANGUAGE", isbnJsonObject.getString("lang")));
+            }catch (JSONException e){
+                e.printStackTrace();
+            }
+            try {
+                isbnData.add(new ItemIsbnData("YEAR", isbnJsonObject.getString("year")));
+            }catch (JSONException e){
+                e.printStackTrace();
+            }
+            try {
+                isbnData.add(new ItemIsbnData("EDITION", isbnJsonObject.getString("ed")));
+
+                //Aktuelle Versionsnummer setzten
+                edition = new ItemEditions(isbnJsonObject.getString("ed"),0,"");
+                currentEdition = edition.getEditionNr();
+            }catch (JSONException e){
+                e.printStackTrace();
+            }
+            try {
+                isbnData.add(new ItemIsbnData("FORM", isbnJsonObject.getString("form")));
+            }catch (JSONException e){
+                e.printStackTrace();
+            }
+            try {
+                isbnData.add(new ItemIsbnData("ISBN", (String) isbnJsonObject.getJSONArray("isbn").get(0)));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }catch (JSONException e){
             e.printStackTrace();
         }
+
+
     }
     private  void setIsbnEditions(String json){
         JSONArray isbnEditionsArray;
         JSONObject isbnJsonObject;
+        ItemEditions edition;
         isbnEditions.clear();
         try {
             isbnEditionsArray  = new JSONArray(new JSONObject(json).getString("list"));
-            for (int i = 1; i < isbnEditionsArray.length() - 1; i++){
+            for (int i = 1; i < isbnEditionsArray.length(); i++){
                 isbnJsonObject = isbnEditionsArray.getJSONObject(i);
                 try {
-                    isbnEditions.add(new ItemEditions(isbnJsonObject.getString("ed"),new Integer(isbnJsonObject.getString("year")),isbnJsonObject.getJSONArray("isbn").get(0).toString()));
+                    System.out.println("=================================");
+                    System.out.println(isbnJsonObject.isNull("ed"));
+                    edition = new ItemEditions(isbnJsonObject.getString("ed"),new Integer(isbnJsonObject.getString("year")),isbnJsonObject.getJSONArray("isbn").get(0).toString());
+
+                    isbnEditions.add(edition);
+
+                    //Maximale Versionsnummer setzten
+                    if(edition.getEditionNr() > maxEtition){
+                        maxEtition = edition.getEditionNr();
+                    }
                 }catch (JSONException e){
+                    edition = new ItemEditions("1st ed.",new Integer(isbnJsonObject.getString("year")),isbnJsonObject.getJSONArray("isbn").get(0).toString());
+                    isbnEditions.add(edition);
                     e.printStackTrace();
                 }
             }
@@ -172,6 +227,9 @@ public class IsbnService extends AsyncTask<Void, Void, String> {
     }
     public String getErrorText(){
         return this.errorText;
+    }
+    public boolean isNewEdition(){
+        return(currentEdition<maxEtition);
     }
     public ArrayList<ItemIsbnData> getIsbnDataList(){
         return this.isbnData;
