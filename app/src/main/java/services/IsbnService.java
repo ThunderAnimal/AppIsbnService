@@ -4,6 +4,8 @@ import android.annotation.TargetApi;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.widget.TextView;
+import listView.ItemEditions;
+import listView.ItemIsbnData;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -12,9 +14,12 @@ import org.w3c.dom.Text;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Array;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Objects;
 
 /**
@@ -27,9 +32,15 @@ public class IsbnService extends AsyncTask<Void, Void, String> {
     private IServiceComplete mServiceComplete;
     private String isbn;
 
+    private boolean error;
+    private String errorText;
+    private ArrayList<ItemIsbnData> isbnData = new ArrayList<ItemIsbnData>();
+    private ArrayList<ItemEditions> isbnEditions = new ArrayList<ItemEditions>();
+
     public IsbnService(String isbn){
         this.isbn = isbn;
     }
+
     public void setListener(IServiceComplete serviceComplete){
         mServiceComplete = serviceComplete;
     }
@@ -60,11 +71,33 @@ public class IsbnService extends AsyncTask<Void, Void, String> {
     protected void onPostExecute(String json) {
         super.onPostExecute(json);
 
-        mServiceComplete.callback(json);
+        setError(json);
+        setErrorText(json);
+        setIsbnDataList(json);
+        setIsbnEditions(json);
+
+        mServiceComplete.callback();
+    }
+
+
+    @TargetApi(Build.VERSION_CODES.KITKAT)
+    private void setError(String json){
+        String stat;
+        try {
+            stat = new JSONObject(json).getString("stat");
+
+            if(Objects.equals(stat, "ok")){
+                error =  false;
+            }else {
+                error = true;
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+            error = true;
+        }
     }
     @TargetApi(Build.VERSION_CODES.KITKAT)
-    public String getErrorText(String json){
-        String errorText = "";
+    private void setErrorText(String json){
         String stat;
 
         try {
@@ -95,46 +128,56 @@ public class IsbnService extends AsyncTask<Void, Void, String> {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        return errorText;
-
-
     }
-
-    @TargetApi(Build.VERSION_CODES.KITKAT)
-    public boolean isError(String json){
-        String stat;
-        try {
-            stat = new JSONObject(json).getString("stat");
-
-            if(Objects.equals(stat, "ok")){
-                return  false;
-            }else {
-                return true;
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-            return true;
-        }
-    }
-    public ArrayList<String[]> getIsbnDataList(String json){
+    private void setIsbnDataList(String json){
         JSONObject isbnJsonObject;
-        ArrayList<String[]> isbnData = new ArrayList<String[]>();
+        isbnData.clear();
 
         try {
             isbnJsonObject = new JSONArray(new JSONObject(json).getString("list")).getJSONObject(0);
-            isbnData.add(new String[]{"title", isbnJsonObject.getString("title")});
-            isbnData.add(new String[]{"autor", isbnJsonObject.getString("author")});
-            isbnData.add(new String[]{"publischer", isbnJsonObject.getString("publisher")});
-            isbnData.add(new String[]{"language", isbnJsonObject.getString("lang")});
-            isbnData.add(new String[]{"year", isbnJsonObject.getString("year")});
-            isbnData.add(new String[]{"edition", isbnJsonObject.getString("ed")});
-            isbnData.add(new String[]{"form", isbnJsonObject.getString("form")});
-            isbnData.add(new String[]{"isbn", isbnJsonObject.getString("isbn")});
+            isbnData.add(new ItemIsbnData ("TITLE", isbnJsonObject.getString("title")));
+            isbnData.add(new ItemIsbnData("AUTOR", isbnJsonObject.getString("author")));
+            isbnData.add(new ItemIsbnData("PUBLISHER", isbnJsonObject.getString("publisher")));
+            isbnData.add(new ItemIsbnData("LANGUAGE", isbnJsonObject.getString("lang")));
+            isbnData.add(new ItemIsbnData("YEAR", isbnJsonObject.getString("year")));
+            isbnData.add(new ItemIsbnData("EDITION", isbnJsonObject.getString("ed")));
+            isbnData.add(new ItemIsbnData("FORM", isbnJsonObject.getString("form")));
+            isbnData.add(new ItemIsbnData("ISBN", (String) isbnJsonObject.getJSONArray("isbn").get(0)));
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+    private  void setIsbnEditions(String json){
+        JSONArray isbnEditionsArray;
+        JSONObject isbnJsonObject;
+        isbnEditions.clear();
+        try {
+            isbnEditionsArray  = new JSONArray(new JSONObject(json).getString("list"));
+            for (int i = 1; i < isbnEditionsArray.length() - 1; i++){
+                isbnJsonObject = isbnEditionsArray.getJSONObject(i);
+                try {
+                    isbnEditions.add(new ItemEditions(isbnJsonObject.getString("ed"),new Integer(isbnJsonObject.getString("year")),isbnJsonObject.getJSONArray("isbn").get(0).toString()));
+                }catch (JSONException e){
+                    e.printStackTrace();
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        Collections.sort(isbnEditions);
+    }
 
-        return isbnData;
+    public boolean isError(){
+        return this.error;
+    }
+    public String getErrorText(){
+        return this.errorText;
+    }
+    public ArrayList<ItemIsbnData> getIsbnDataList(){
+        return this.isbnData;
+    }
+    public ArrayList<ItemEditions> getIsbnEditions(){
+        return this.isbnEditions;
     }
 
 }
