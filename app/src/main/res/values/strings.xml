@@ -7,5 +7,7 @@
     <string name="loadIsbnData">load ISBN data</string>
     <string name="inputIsbn">ISBN number</string>
     <string name="ok">ok</string>
+    <string name="action_camera">camera</string>
+    <string name="action_about">about</string>
 
 </resources>
