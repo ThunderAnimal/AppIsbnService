@@ -200,8 +200,6 @@ public class IsbnService extends AsyncTask<Void, Void, String> {
             for (int i = 1; i < isbnEditionsArray.length(); i++){
                 isbnJsonObject = isbnEditionsArray.getJSONObject(i);
                 try {
-                    System.out.println("=================================");
-                    System.out.println(isbnJsonObject.isNull("ed"));
                     edition = new ItemEditions(isbnJsonObject.getString("ed"),new Integer(isbnJsonObject.getString("year")),isbnJsonObject.getJSONArray("isbn").get(0).toString());
 
                     isbnEditions.add(edition);

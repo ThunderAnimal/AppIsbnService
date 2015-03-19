@@ -114,10 +114,18 @@ public class OcrService extends AsyncTask<Void, Void, Void> {
         }
     }
     private void setIsbn(String responseText){
-        responseText = responseText.toUpperCase();
-        isbn = responseText.replace("ISBN", "").trim();
-    }
+        System.out.println(responseText);
 
+        String helpIsbn;
+        helpIsbn = responseText.toUpperCase();
+        helpIsbn = helpIsbn.replace("ISBN", "");
+        helpIsbn = helpIsbn.replace("SBN", "");
+        helpIsbn = helpIsbn.replace("\uFEFF", "");
+        helpIsbn = helpIsbn.replace(" ", "");
+        helpIsbn = helpIsbn.trim();
+        this.isbn = helpIsbn;
+
+    }
     public String getIsbn() {
         return this.isbn;
     }

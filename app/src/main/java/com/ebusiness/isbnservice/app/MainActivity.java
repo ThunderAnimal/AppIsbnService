@@ -156,6 +156,8 @@ public class MainActivity extends ActionBarActivity {
 
     private void executeIsbnService(String isbn){
         setStartLoadView();
+        System.out.println("================================");
+        System.out.println(isbn);
         myIsbnService = new IsbnService(isbn);
         myIsbnService.setListener(new IServiceComplete() {
             @Override
@@ -191,12 +193,14 @@ public class MainActivity extends ActionBarActivity {
                 if(myOcrService.isError()){
                     mTextError.setText("Can't read ISBN");
                     setViewErrorIsbn();
+                    setStopLoadView();
                 }else {
                     mTextIsbn.setText(myOcrService.getIsbn());
                     executeIsbnService(myOcrService.getIsbn());
                 }
             }
         });
+        myOcrService.execute();
     }
 
     @Override
